@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nepal Embassy Demand Document Generator</title>
+<style>
+  :root{
+    --navy:#1b2a4a; --navy-dark:#101a30; --accent:#c0392b; --accent2:#2d6a4f;
+    --bg:#f4f6fa; --card:#ffffff; --border:#dfe4ee; --text:#1f2937; --muted:#6b7280;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--text); line-height:1.4;
+  }
+  header{
+    background:linear-gradient(135deg,var(--navy),var(--navy-dark)); color:#fff;
+    padding:24px 20px; text-align:center;
+  }
+  header h1{margin:0 0 4px; font-size:1.4rem;}
+  header p{margin:0; opacity:.85; font-size:.88rem;}
+  .wrap{max-width:1000px; margin:0 auto; padding:20px;}
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:10px;
+    padding:20px 22px; margin-bottom:18px; box-shadow:0 1px 3px rgba(20,30,60,.05);
+  }
+  .card h2{
+    margin:0 0 14px; font-size:1.05rem; color:var(--navy);
+    border-bottom:2px solid var(--border); padding-bottom:8px; display:flex; align-items:center; gap:8px;
+  }
+  .card h2 .step{
+    background:var(--navy); color:#fff; width:22px; height:22px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center; font-size:.72rem;
+  }
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px 16px;}
+  label{display:block; font-size:.78rem; font-weight:600; color:var(--muted); margin-bottom:4px; text-transform:uppercase; letter-spacing:.02em;}
+  input[type=text], input[type=date], input[type=number], select, textarea{
+    width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px;
+    font-size:.92rem; font-family:inherit; background:#fbfcfe;
+  }
+  input.invalid, select.invalid{border-color:var(--accent); background:#fff5f4;}
+  input:focus, select:focus, textarea:focus{outline:2px solid #9db4e8; border-color:#9db4e8;}
+  .field{margin-bottom:2px;}
+  .table-scroll{overflow-x:auto;}
+  table.dyn{border-collapse:collapse; width:100%; min-width:900px; font-size:.85rem;}
+  table.dyn th{
+    background:#eef1f8; color:var(--navy); font-size:.7rem; text-transform:uppercase;
+    padding:8px 6px; border:1px solid var(--border); text-align:left; white-space:nowrap;
+  }
+  table.dyn td{border:1px solid var(--border); padding:4px;}
+  table.dyn td input, table.dyn td select{border:none; background:transparent; padding:6px 4px; font-size:.85rem; width:100%;}
+  table.dyn td input:focus, table.dyn td select:focus{outline:1px solid #9db4e8; background:#fff;}
+  .row-actions{width:34px; text-align:center;}
+  .btn{
+    display:inline-flex; align-items:center; gap:6px; padding:9px 16px; border:none; border-radius:7px;
+    font-size:.88rem; font-weight:600; cursor:pointer; transition:.15s;
+  }
+  .btn-add{background:#eaf2ff; color:#1d4ed8; margin-top:10px;}
+  .btn-add:hover{background:#d9e8ff;}
+  .btn-secondary{background:#eef1f8; color:var(--navy);}
+  .btn-secondary:hover{background:#e2e7f3;}
+  .btn-del{background:transparent; color:var(--accent); font-size:1rem; cursor:pointer; border:none;}
+  .btn-generate{
+    background:var(--accent2); color:#fff; font-size:1.02rem; padding:14px 26px; width:100%;
+    justify-content:center; box-shadow:0 2px 6px rgba(45,106,79,.3);
+  }
+  .btn-generate:hover{background:#245e42;}
+  .btn-generate:disabled{background:#9ca3af; cursor:not-allowed; box-shadow:none;}
+  .hint{font-size:.78rem; color:var(--muted); margin-top:6px;}
+  .totals-bar{
+    display:flex; gap:22px; margin-top:12px; padding:10px 14px; background:#f7f9fc;
+    border:1px dashed var(--border); border-radius:8px; font-size:.85rem; flex-wrap:wrap;
+  }
+  .totals-bar b{color:var(--navy);}
+  footer{text-align:center; padding:24px; color:var(--muted); font-size:.8rem;}
+  #status{ margin-top:14px; padding:10px 14px; border-radius:7px; font-size:.87rem; display:none; }
+  #status.ok{display:block; background:#e8f7ee; color:#1e7a44; border:1px solid #bfe8cf;}
+  #status.err{display:block; background:#fdecec; color:#b3261e; border:1px solid #f6c6c3;}
+  .section-note{font-size:.8rem; color:var(--muted); margin:-6px 0 14px;}
+  .appbar{
+    display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; justify-content:space-between;
+    background:#fff; border:1px solid var(--border); border-radius:10px; padding:12px 16px; margin-bottom:18px;
+  }
+  .appbar .appid{font-size:.85rem;}
+  .appbar .appid b{color:var(--navy); font-family:monospace; font-size:.95rem;}
+  .appbar .actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .radio-group{display:flex; gap:16px; flex-wrap:wrap; margin-top:4px;}
+  .radio-group label{display:flex; align-items:center; gap:6px; text-transform:none; font-weight:500; font-size:.88rem; color:var(--text);}
+  .radio-group input{width:auto;}
+  .doc-list{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:10px; margin-top:12px;}
+  .doc-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-size:.86rem; background:#fbfcfe;
+  }
+  .doc-item a{color:#1d4ed8; text-decoration:none; font-weight:600;}
+  .doc-item a:hover{text-decoration:underline;}
+  .summary-box{background:#f7f9fc; border:1px dashed var(--border); border-radius:8px; padding:14px 16px; font-size:.87rem;}
+  .summary-box h4{margin:10px 0 4px; color:var(--navy); font-size:.85rem;}
+  .summary-box table{width:100%; border-collapse:collapse; font-size:.85rem; margin-top:4px;}
+  .summary-box table td, .summary-box table th{padding:4px 6px; border-bottom:1px solid var(--border); text-align:left;}
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(16,26,48,.5); display:none; align-items:center; justify-content:center; z-index:50;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{background:#fff; border-radius:10px; padding:22px; width:min(480px,92vw); max-height:80vh; overflow:auto;}
+  .modal h3{margin-top:0;}
+  .modal .app-row{display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:.87rem;}
+  .modal .app-row button{font-size:.8rem; padding:5px 10px;}
+  .error-list{background:#fdecec; border:1px solid #f6c6c3; color:#b3261e; border-radius:8px; padding:10px 14px; font-size:.85rem; margin-top:10px;}
+  @media (max-width:640px){.appbar{flex-direction:column; align-items:stretch;}}
+</style>
+<!-- Load Docxtemplater, PizZip, and FileSaver libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.4/pizzip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>Nepal Embassy Demand Document Generator</h1>
+  <p>Generate attested demand letters and documentation packages for worker recruitment</p>
+</header>
+
+<div class="wrap">
+  <div class="appbar">
+    <div class="appid">Application Ref: <b id="app-ref-display">---</b></div>
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="saveDraft()">Save Draft</button>
+      <button class="btn btn-secondary" onclick="openLoadModal()">Load Saved</button>
+      <button class="btn btn-secondary" onclick="resetForm()">New Form</button>
+    </div>
+  </div>
+
+  <form id="demandForm" onsubmit="event.preventDefault(); generateDocuments();">
+    
+    <!-- STEP 1: Company Details -->
+    <div class="card">
+      <h2><span class="step">1</span> Company & Employer Details</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="company_name">Company Name (English)</label>
+          <input type="text" id="company_name" required placeholder="e.g. Al-MANSOORI TRADING W.L.L.">
+        </div>
+        <div class="field">
+          <label for="cr_number">C.R. / Commercial Registration No.</label>
+          <input type="text" id="cr_number" required placeholder="e.g. 123456">
+        </div>
+        <div class="field">
+          <label for="company_address">Company Address / Location</label>
+          <input type="text" id="company_address" required placeholder="P.O. Box 12345, Doha, Qatar">
+        </div>
+        <div class="field">
+          <label for="sponsor_name">Sponsor / Manager Name</label>
+          <input type="text" id="sponsor_name" required placeholder="Authorized Representative">
+        </div>
+        <div class="field">
+          <label for="contact_phone">Contact Phone / Mobile</label>
+          <input type="text" id="contact_phone" required placeholder="+974 4400 0000">
+        </div>
+        <div class="field">
+          <label for="contact_email">Email Address</label>
+          <input type="text" id="contact_email" required placeholder="info@company.com">
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Recruiting Agency Details -->
+    <div class="card">
+      <h2><span class="step">2</span> Nepalese Recruiting Agency (RA) Details</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="agency_name">Agency Name (Nepal)</label>
+          <input type="text" id="agency_name" required placeholder="e.g. Human Resources Overseas Pvt. Ltd.">
+        </div>
+        <div class="field">
+          <label for="agency_license">Agency License No.</label>
+          <input type="text" id="agency_license" required placeholder="e.g. 1234/078/079">
+        </div>
+        <div class="field">
+          <label for="agency_address">Agency Address (Kathmandu)</label>
+          <input type="text" id="agency_address" required placeholder="Kathmandu, Nepal">
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Job Requirements & Categories -->
+    <div class="card">
+      <h2><span class="step">3</span> Job Categories & Salary Breakdown</h2>
+      <p class="section-note">Specify categories, quantities, monthly basic salary, and food allowance (in QAR / Local Currency).</p>
+      
+      <div class="table-scroll">
+        <table class="dyn" id="jobsTable">
+          <thead>
+            <tr>
+              <th>Job Category / Position</th>
+              <th style="width:100px;">Qty (Male)</th>
+              <th style="width:100px;">Qty (Female)</th>
+              <th style="width:130px;">Basic Salary</th>
+              <th style="width:130px;">Food Allowance</th>
+              <th style="width:60px;">Currency</th>
+              <th class="row-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="jobsTbody">
+            <!-- Dynamic rows inserted here -->
+          </tbody>
+        </table>
+      </div>
+      
+      <button type="button" class="btn btn-add" onclick="addJobRow()">+ Add Job Category</button>
+
+      <div class="totals-bar">
+        <div>Total Male Workers: <b id="total_male">0</b></div>
+        <div>Total Female Workers: <b id="total_female">0</b></div>
+        <div>Total Workers: <b id="total_workers">0</b></div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Employment Terms & Conditions -->
+    <div class="card">
+      <h2><span class="step">4</span> Contract Terms & Working Conditions</h2>
+      <div class="grid">
+        <div class="field">
+          <label for="working_hours">Working Hours per Day</label>
+          <input type="number" id="working_hours" value="8" required>
+        </div>
+        <div class="field">
+          <label for="working_days">Working Days per Week</label>
+          <input type="number" id="working_days" value="6" required>
+        </div>
+        <div class="field">
+          <label for="contract_period">Contract Duration (Years)</label>
+          <input type="number" id="contract_period" value="2" required>
+        </div>
+        <div class="field">
+          <label for="accommodation">Accommodation</label>
+          <select id="accommodation">
+            <option value="Provided by Company">Provided free by Company</option>
+            <option value="Allowance Included">Allowance Provided</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="transportation">Transportation</label>
+          <select id="transportation">
+            <option value="Provided by Company">Provided free by Company</option>
+            <option value="Allowance Included">Allowance Provided</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="air_ticket">Air Ticket</label>
+          <select id="air_ticket">
+            <option value="Joining and Return Provided free by Employer">Joining & Return Provided free by Employer</option>
+            <option value="Return Ticket Provided Free">Return Ticket Only Provided</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: Generate & Download -->
+    <div class="card">
+      <h2><span class="step">5</span> Generate Documents</h2>
+      <p class="section-note">Upload your template Docx file (or system pre-loaded template) to populate data instantly.</p>
+      
+      <div class="field" style="margin-bottom:14px;">
+        <label for="templateFile">Upload Template (.docx)</label>
+        <input type="file" id="templateFile" accept=".docx">
+        <div class="hint">Ensure template uses placeholders like {{company_name}}, {{cr_number}}, {{#jobs}}, {{category}}, {{qty_male}}, {{basic_salary}}, {{/jobs}}, etc.</div>
+      </div>
+
+      <button type="submit" class="btn btn-generate" id="generateBtn">Generate & Download Package (.docx)</button>
+
+      <div id="status"></div>
+    </div>
+
+  </form>
+</div>
+
+<footer>
+  <p>&copy; 2026 Embassy of Nepal Demand Document Suite. Automated Public Service Tools.</p>
+</footer>
+
+<!-- Load Saved Data Modal -->
+<div class="modal-overlay" id="loadModal">
+  <div class="modal">
+    <h3>Saved Applications</h3>
+    <div id="savedList">No saved drafts found.</div>
+    <br>
+    <button class="btn btn-secondary" onclick="closeLoadModal()">Close</button>
+  </div>
+</div>
+
+<script>
+  let jobsCount = 0;
+
+  function initApp() {
+    const randomRef = 'NEP-' + Math.floor(100000 + Math.random() * 900000);
+    document.getElementById('app-ref-display').innerText = randomRef;
+    
+    // Add default initial row
+    addJobRow('General Worker / Cleaner', 10, 0, 1000, 300, 'QAR');
+  }
+
+  function addJobRow(cat = '', male = 0, female = 0, salary = '', food = '', curr = 'QAR') {
+    jobsCount++;
+    const tbody = document.getElementById('jobsTbody');
+    const tr = document.createElement('tr');
+    tr.id = `row-${jobsCount}`;
+    tr.innerHTML = `
+      <td><input type="text" class="j-cat" value="${cat}" placeholder="e.g. Mason / Electrician" required></td>
+      <td><input type="number" class="j-male" value="${male}" min="0" oninput="calculateTotals()" required></td>
+      <td><input type="number" class="j-female" value="${female}" min="0" oninput="calculateTotals()" required></td>
+      <td><input type="number" class="j-salary" value="${salary}" placeholder="1000" required></td>
+      <td><input type="number" class="j-food" value="${food}" placeholder="300"></td>
+      <td><input type="text" class="j-curr" value="${curr}" style="text-align:center;"></td>
+      <td class="row-actions"><button type="button" class="btn-del" onclick="removeJobRow('row-${jobsCount}')">&times;</button></td>
+    `;
+    tbody.appendChild(tr);
+    calculateTotals();
+  }
+
+  function removeJobRow(rowId) {
+    const row = document.getElementById(rowId);
+    if(row) {
+      row.remove();
+      calculateTotals();
+    }
+  }
+
+  function calculateTotals() {
+    let maleSum = 0;
+    let femaleSum = 0;
+    
+    const males = document.querySelectorAll('.j-male');
+    const females = document.querySelectorAll('.j-female');
+
+    males.forEach(input => maleSum += parseInt(input.value || 0, 10));
+    females.forEach(input => femaleSum += parseInt(input.value || 0, 10));
+
+    document.getElementById('total_male').innerText = maleSum;
+    document.getElementById('total_female').innerText = femaleSum;
+    document.getElementById('total_workers').innerText = maleSum + femaleSum;
+  }
+
+  function getFormData() {
+    const jobs = [];
+    const rows = document.querySelectorAll('#jobsTbody tr');
+    
+    rows.forEach(tr => {
+      jobs.push({
+        category: tr.querySelector('.j-cat').value,
+        qty_male: parseInt(tr.querySelector('.j-male').value || 0, 10),
+        qty_female: parseInt(tr.querySelector('.j-female').value || 0, 10),
+        total_qty: parseInt(tr.querySelector('.j-male').value || 0, 10) + parseInt(tr.querySelector('.j-female').value || 0, 10),
+        basic_salary: tr.querySelector('.j-salary').value,
+        food_allowance: tr.querySelector('.j-food').value || '0',
+        currency: tr.querySelector('.j-curr').value || 'QAR'
+      });
+    });
+
+    return {
+      app_ref: document.getElementById('app-ref-display').innerText,
+      company_name: document.getElementById('company_name').value,
+      cr_number: document.getElementById('cr_number').value,
+      company_address: document.getElementById('company_address').value,
+      sponsor_name: document.getElementById('sponsor_name').value,
+      contact_phone: document.getElementById('contact_phone').value,
+      contact_email: document.getElementById('contact_email').value,
+      agency_name: document.getElementById('agency_name').value,
+      agency_license: document.getElementById('agency_license').value,
+      agency_address: document.getElementById('agency_address').value,
+      working_hours: document.getElementById('working_hours').value,
+      working_days: document.getElementById('working_days').value,
+      contract_period: document.getElementById('contract_period').value,
+      accommodation: document.getElementById('accommodation').value,
+      transportation: document.getElementById('transportation').value,
+      air_ticket: document.getElementById('air_ticket').value,
+      total_male: document.getElementById('total_male').innerText,
+      total_female: document.getElementById('total_female').innerText,
+      total_workers: document.getElementById('total_workers').innerText,
+      jobs: jobs,
+      date_today: new Date().toISOString().split('T')[0]
+    };
+  }
+
+  function saveDraft() {
+    const data = getFormData();
+    let drafts = JSON.parse(localStorage.getItem('nepal_embassy_drafts') || '[]');
+    drafts = drafts.filter(d => d.app_ref !== data.app_ref);
+    drafts.push(data);
+    localStorage.setItem('nepal_embassy_drafts', JSON.stringify(drafts));
+    showStatus('Draft saved successfully to local storage!', 'ok');
+  }
+
+  function openLoadModal() {
+    const modal = document.getElementById('loadModal');
+    const container = document.getElementById('savedList');
+    const drafts = JSON.parse(localStorage.getItem('nepal_embassy_drafts') || '[]');
+
+    if(drafts.length === 0) {
+      container.innerHTML = '<p style="color:var(--muted)">No saved drafts available.</p>';
+    } else {
+      container.innerHTML = drafts.map((d, index) => `
+        <div class="app-row">
+          <div>
+            <b>${d.company_name || 'Unnamed Company'}</b> (${d.app_ref})<br>
+            <small style="color:var(--muted)">${d.date_today} | Workers: ${d.total_workers}</small>
+          </div>
+          <button class="btn btn-secondary" onclick="loadDraft(${index})">Load</button>
+        </div>
+      `).join('');
+    }
+    modal.classList.add('open');
+  }
+
+  function closeLoadModal() {
+    document.getElementById('loadModal').classList.remove('open');
+  }
+
+  function loadDraft(index) {
+    const drafts = JSON.parse(localStorage.getItem('nepal_embassy_drafts') || '[]');
+    const d = drafts[index];
+    if(!d) return;
+
+    document.getElementById('app-ref-display').innerText = d.app_ref;
+    document.getElementById('company_name').value = d.company_name || '';
+    document.getElementById('cr_number').value = d.cr_number || '';
+    document.getElementById('company_address').value = d.company_address || '';
+    document.getElementById('sponsor_name').value = d.sponsor_name || '';
+    document.getElementById('contact_phone').value = d.contact_phone || '';
+    document.getElementById('contact_email').value = d.contact_email || '';
+    document.getElementById('agency_name').value = d.agency_name || '';
+    document.getElementById('agency_license').value = d.agency_license || '';
+    document.getElementById('agency_address').value = d.agency_address || '';
+    document.getElementById('working_hours').value = d.working_hours || 8;
+    document.getElementById('working_days').value = d.working_days || 6;
+    document.getElementById('contract_period').value = d.contract_period || 2;
+    document.getElementById('accommodation').value = d.accommodation || 'Provided by Company';
+    document.getElementById('transportation').value = d.transportation || 'Provided by Company';
+    document.getElementById('air_ticket').value = d.air_ticket || 'Joining and Return Provided free by Employer';
+
+    const tbody = document.getElementById('jobsTbody');
+    tbody.innerHTML = '';
+    jobsCount = 0;
+
+    if(d.jobs && d.jobs.length > 0) {
+      d.jobs.forEach(j => {
+        addJobRow(j.category, j.qty_male, j.qty_female, j.basic_salary, j.food_allowance, j.currency);
+      });
+    } else {
+      addJobRow();
+    }
+
+    closeLoadModal();
+    showStatus('Draft loaded successfully!', 'ok');
+  }
+
+  function resetForm() {
+    if(confirm('Start a new form? Unsaved changes will be cleared.')) {
+      document.getElementById('demandForm').reset();
+      document.getElementById('jobsTbody').innerHTML = '';
+      jobsCount = 0;
+      initApp();
+      showStatus('Form reset.', 'ok');
+    }
+  }
+
+  function showStatus(msg, type) {
+    const st = document.getElementById('status');
+    st.innerText = msg;
+    st.className = type;
+    st.style.display = 'block';
+    setTimeout(() => { st.style.display = 'none'; }, 4000);
+  }
+
+  function generateDocuments() {
+    const fileInput = document.getElementById('templateFile');
+    if (!fileInput.files || fileInput.files.length === 0) {
+      alert('Please select a template .docx file to populate.');
+      return;
+    }
+
+    const data = getFormData();
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(evt) {
+      try {
+        const content = evt.target.result;
+        const zip = new PizZip(content);
+        const doc = new window.docxtemplater(zip, {
+          paragraphLoop: true,
+          linebreaks: true,
+        });
+
+        // Set the template data
+        doc.render(data);
+
+        const out = doc.getZip().generate({
+          type: 'blob',
+          mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        });
+
+        const filename = `Demand_Document_${data.company_name.replace(/[^a-z0-9]/gi, '_')}_${data.app_ref}.docx`;
+        saveAs(out, filename);
+        showStatus('Document generated and download started successfully!', 'ok');
+      } catch (error) {
+        console.error('Docxtemplater error:', error);
+        showStatus('Error generating document: ' + error.message, 'err');
+      }
+    };
+
+    reader.readAsArrayBuffer(file);
+  }
+
+  window.onload = initApp;
+</script>
+</body>
+</html>
